@@ -48,8 +48,8 @@ public:
 struct Properties{
     bool isDir;
     string name;
-    int weigth;
-    int * startFile;
+    int size;
+    int startFile;
 };
 
 class Note {
@@ -63,6 +63,21 @@ public:
     Properties properties;
 	explicit File(Properties _properties) : properties(move(_properties)){
         properties = _properties;
+        int start = 0, end = 0;
+        for (auto i : HDD){
+            if (end - start + 1 == properties.size) {
+                properties.startFile = start;
+                for (;start <= end; start++){
+                    HDD[start] = true;
+                }
+                break;
+            }
+            else if (!i && end - start < properties.size) end++;
+            else if (i && end - start < properties.size) {
+                start = end + 1;
+                end++;
+            }
+        }
     };
 	void open() override {
 		cout << "Opening File" << endl;
@@ -77,7 +92,7 @@ class Directory :public Note {
 
 public:
     string name;
-    Properties properties{true, name, 0, nullptr};
+    Properties properties{true, name, 0, -1};
 
 	vector<Note*> List;
 
@@ -96,7 +111,7 @@ public:
         }
 	}
 	void createFile(string fileName, int size) {
-		auto * X = new File({false, move(fileName), size, nullptr});
+		auto * X = new File({false, move(fileName), size, -1});
 		List.push_back(X);
 	};
     void createDir(const string& newDirName){
@@ -120,6 +135,14 @@ void changeCurrentDir(const string& target){
     }
 }
 
+void memView(){
+    cout << "HDD: [ ";
+    for (int i = 0; i < 30; i++){
+         cout << HDD[i];
+    }
+    cout << " ]" << endl;
+}
+
 int main()
 {
 /*  auto* Dir1 = new Directory;
@@ -134,6 +157,10 @@ int main()
     auto * rootDir = new Directory("rootDir");
     currentDir = rootDir;
 
+    currentDir->createFile("N", 3);
+    memView();
+    currentDir->createFile("N1", 5);
+    memView();
 
     return 0;
 };
