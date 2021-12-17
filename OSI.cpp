@@ -11,6 +11,7 @@ class Note;
 class Directory;
 class File;
 vector<Properties *> allFiles;
+vector<Directory *> movement;
 Directory * currentDir;
 Directory * rootDir;
 
@@ -214,10 +215,18 @@ void printDir(Directory * dir) {
     }
 }
 
-void changeCurrentDir(const string& target){
+void goTo(const string& target){
     for (auto i : currentDir->List) {
-        if (i->getProperties().isDir && i->getProperties().name == target) currentDir = dynamic_cast<Directory *>(i);
+        if (i->getProperties().isDir && i->getProperties().name == target) {
+            currentDir = dynamic_cast<Directory *>(i);
+            movement.push_back(currentDir);
+        }
     }
+}
+void back(){
+    if (movement.size() == 1) return;
+    movement.pop_back();
+    currentDir = movement[-1];
 }
 
 void memView(){
@@ -253,10 +262,18 @@ void copy(const string & target){
     }
 }
 
+void path(){
+    for (auto i: movement){
+        cout << i->getProperties().name << "/";
+    }
+    cout << endl;
+}
+
 int main()
 {
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
+    movement.push_back(rootDir);
 
     /*
     currentDir->createFile("file", 3);
@@ -266,7 +283,7 @@ int main()
     currentDir->createDir("di");
     currentDir = rootDir;
     copy("1");
-    changeCurrentDir("1 copy");
+    goTo("1 copy");
     memView();
 
     printDir(currentDir); */
@@ -314,7 +331,7 @@ int main()
     memView(); */
     /*
     currentDir->createDir("new dir");
-    changeCurrentDir("new dir");
+    goTo("new dir");
     currentDir->createFile("file1", 4);
     currentDir->createFile("file2", 4);
     printDir(currentDir);
