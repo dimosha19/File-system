@@ -51,7 +51,7 @@ public:
 struct Properties{
     bool isDir;
     string name;
-    int size, start;
+    int size, startHDD, startRAM;
 };
 
 class Note {
@@ -67,7 +67,7 @@ public:
         int start = 0, end = 0;
         for (auto i : HDD){
             if (end - start + 1 == properties.size) {
-                properties.start = start;
+                properties.startHDD = start;
                 allFiles.push_back(&properties);
                 for (;start <= end; start++){
                     HDD[start] = true;
@@ -82,13 +82,33 @@ public:
         }
     };
     ~File(){
-        for (int i = properties.start; i < properties.size + properties.start; i++){
+        for (int i = properties.startHDD; i < properties.size + properties.startHDD; i++){
             HDD[i] = false;
         }
     }
 	void open() override {
-		cout << "Opening File" << endl;
+        int start = 0, end = 0;
+        for (auto i : RAM){
+            if (end - start + 1 == properties.size) {
+                properties.startRAM = start;
+                allFiles.push_back(&properties);
+                for (;start <= end; start++){
+                    RAM[start] = true;
+                }
+                break;
+            }
+            else if (!i && end - start < properties.size) end++;
+            else if (i && end - start < properties.size) {
+                start = end + 1;
+                end++;
+            }
+        }
 	}
+    void close() const{
+        for (int i = properties.startRAM; i < properties.size + properties.startRAM; i++){
+            RAM[i] = false;
+        }
+    }
     Properties getProperties() override {
         return properties;
 	}
@@ -146,12 +166,12 @@ void defragm(){
             flag = false;
             holeEnd = i;
             for (auto k: allFiles) {
-                if (k->start >= holeEnd) {
-                    for (int j = k->start; j < k->start + k->size; j++) {
+                if (k->startHDD >= holeEnd) {
+                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
                         HDD[j] = false;
                     }
-                    k->start -= (holeEnd - holeStart);
-                    for (int j = k->start; j < k->start + k->size; j++) {
+                    k->startHDD -= (holeEnd - holeStart);
+                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
                         HDD[j] = true;
                     }
                 }
@@ -182,6 +202,22 @@ void memView(){
          cout << HDD[i];
     }
     cout << " ]" << endl;
+    cout << "RAM: [ ";
+    for (int i = 0; i < 30; i++){
+        cout << RAM[i];
+    }
+    cout << " ]" << endl;
+}
+
+void openFile(const string& target){
+    for (auto i : currentDir->List){
+        if (i->getProperties().name == target) dynamic_cast<File *>(i)->open();
+    }
+}
+void closeFile(const string& target){
+    for (auto i : currentDir->List){
+        if (i->getProperties().name == target) dynamic_cast<File *>(i)->close();
+    }
 }
 
 int main()
@@ -198,6 +234,7 @@ int main()
     auto * rootDir = new Directory("rootDir");
     currentDir = rootDir;
 
+    /*
     currentDir->createFile("N1", 2);
     memView();
     currentDir->createFile("N2", 2);
@@ -213,6 +250,18 @@ int main()
     currentDir->Delete("N4");
     memView();
     defragm();
+    memView(); */
+    /*
+    currentDir->createFile("newFile", 10);
+    currentDir->createFile("newFile1", 10);
     memView();
+
+    openFile("newFile");
+    openFile("newFile1");
+    memView();
+
+    closeFile("newFile");
+    memView(); */
+
     return 0;
 };
