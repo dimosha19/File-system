@@ -8,8 +8,8 @@ bool HDD[100];
 bool RAM[100];
 struct Properties;
 class Note;
-class File;
 class Directory;
+class File;
 vector<Properties *> allFiles;
 Directory * currentDir;
 Directory * rootDir;
@@ -59,6 +59,7 @@ class Note {
 public:
 	virtual void open() = 0;
 	virtual Properties getProperties() = 0;
+    virtual Note* copy(Note* file) = 0;
 };
 
 class File :public Note {
@@ -86,6 +87,9 @@ public:
         for (int i = properties.startHDD; i < properties.size + properties.startHDD; i++){
             HDD[i] = false;
         }
+    }
+    Note * copy(Note* file) override {
+        return new File({false, file->getProperties().name + " copy", file->getProperties().size, -1});
     }
 	void open() override {
         int start = 0, end = 0;
@@ -130,6 +134,9 @@ public:
         }
         currentDir = rootDir;
     }
+    Directory(const Directory &directory){
+
+    }
 	void open() override {
 		cout << "Opening Dir" << endl;
 	}
@@ -151,12 +158,15 @@ public:
         auto X = new File({false, fileName, size, -1});
 		List.push_back(X);
 	};
-    void copy(const string& target){
+    Note * copy(Note * file) override{
+        // create dir
+        // fill dir
+        // return * dir
+        auto * copy = new Directory(name + " copy");
         for (auto i : List){
-            if (i->getProperties().name == target){
-                if (!i->getProperties().isDir) createFile(i->getProperties().name + " copy", i->getProperties().size);
-            }
+            copy->List.push_back(i->copy(i));
         }
+        return copy;
     }
     void createDir(const string& newDirName){
         auto X = new Directory(newDirName);
@@ -228,15 +238,39 @@ void openFile(const string& target){
         if (i->getProperties().name == target) dynamic_cast<File *>(i)->open();
     }
 }
+
 void closeFile(const string& target){
     for (auto i : currentDir->List){
         if (i->getProperties().name == target) dynamic_cast<File *>(i)->close();
     }
 }
 
+void copy(const string & target){
+    for (auto i : currentDir->List){
+        if (i->getProperties().name == target) {
+            currentDir->List.push_back(i->copy(i));
+        };
+    }
+}
+
 int main()
 {
-/*  auto* Dir1 = new Directory;
+    rootDir = new Directory("rootDir");
+    currentDir = rootDir;
+
+    /*
+    currentDir->createFile("file", 3);
+    currentDir->createDir("1");
+    changeCurrentDir("1");
+    currentDir->createFile("fi", 2);
+    currentDir->createDir("di");
+    currentDir = rootDir;
+    copy("1");
+    changeCurrentDir("1 copy");
+    memView();
+
+    printDir(currentDir); */
+    /*  auto* Dir1 = new Directory;
 	Dir1->CreateFile("File1", 1);
 	Dir1->CreateFile("File2", 1);
 	Directory dir;
@@ -244,14 +278,12 @@ int main()
 	dir.CreateFile("MainDirFile", 10);
     dir.Print();
 */
-
-    rootDir = new Directory("rootDir");
-    currentDir = rootDir;
+    /*
     currentDir->createFile("file 1", 5);
     memView();
     currentDir->copy("file 1");
     memView();
-    printDir(currentDir);
+    printDir(currentDir); */
     /*
     currentDir->createFile("N1", 2);
     memView();
