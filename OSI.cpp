@@ -12,6 +12,7 @@ class File;
 class Directory;
 vector<Properties *> allFiles;
 Directory * currentDir;
+Directory * rootDir;
 
 /*class Block {
 public:
@@ -123,7 +124,12 @@ public:
 	vector<Note *> List;
 
     explicit Directory(string _dirName) : name(move(_dirName)) {};
-
+    ~Directory(){
+        for (auto i : List){
+            Delete(i->getProperties().name);
+        }
+        currentDir = rootDir;
+    }
 	void open() override {
 		cout << "Opening Dir" << endl;
 	}
@@ -133,7 +139,8 @@ public:
                 for (auto j : allFiles){
                     if ( j->name == i->getProperties().name) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
                 }
-                delete dynamic_cast<File *>(i);
+                if (i->getProperties().isDir) delete dynamic_cast<Directory *>(i);
+                else delete dynamic_cast<File *>(i);
                 List.erase(remove(List.begin(), List.end(), i), List.end());
                 return;
             }
@@ -231,7 +238,7 @@ int main()
     dir.Print();
 */
 
-    auto * rootDir = new Directory("rootDir");
+    rootDir = new Directory("rootDir");
     currentDir = rootDir;
 
     /*
@@ -261,6 +268,19 @@ int main()
     memView();
 
     closeFile("newFile");
+    memView(); */
+
+    /*
+    currentDir->createDir("new dir");
+    changeCurrentDir("new dir");
+    currentDir->createFile("file1", 4);
+    currentDir->createFile("file2", 4);
+    printDir(currentDir);
+    memView();
+    cout << endl;
+    rootDir->Delete("new dir");
+    cout << currentDir->name;
+    printDir(currentDir);
     memView(); */
 
     return 0;
