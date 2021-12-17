@@ -1,10 +1,12 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include "memory"
 
 using namespace std;
 bool HDD[100];
 bool RAM[100];
+struct Properties;
 class Note;
 class File;
 class Directory;
@@ -48,8 +50,7 @@ public:
 struct Properties{
     bool isDir;
     string name;
-    int size;
-    int startFile;
+    int size, start;
 };
 
 class Note {
@@ -62,11 +63,10 @@ class File :public Note {
 public:
     Properties properties;
 	explicit File(Properties _properties) : properties(move(_properties)){
-        properties = _properties;
         int start = 0, end = 0;
         for (auto i : HDD){
             if (end - start + 1 == properties.size) {
-                properties.startFile = start;
+                properties.start = start;
                 for (;start <= end; start++){
                     HDD[start] = true;
                 }
@@ -79,6 +79,11 @@ public:
             }
         }
     };
+    ~File(){
+        for (int i = properties.start; i < properties.size + properties.start; i++){
+            HDD[i] = false;
+        }
+    }
 	void open() override {
 		cout << "Opening File" << endl;
 	}
@@ -93,8 +98,7 @@ class Directory :public Note {
 public:
     string name;
     Properties properties{true, name, 0, -1};
-
-	vector<Note*> List;
+	vector<Note *> List;
 
     explicit Directory(string _dirName) : name(move(_dirName)) {};
 
@@ -104,18 +108,19 @@ public:
 	void Delete(const string& target) {
         for (auto i : List) {
             if (i->getProperties().name == target) {
+                delete dynamic_cast<File *>(i);
                 List.erase(remove(List.begin(), List.end(), i), List.end());
-                break;
+                return;
             }
-            cout << "No such file or directory" << endl;
         }
+        cout << "No such file or directory" << endl;
 	}
-	void createFile(string fileName, int size) {
-		auto * X = new File({false, move(fileName), size, -1});
+	void createFile(const string& fileName, int size) {
+        auto X = new File({false, fileName, size, -1});
 		List.push_back(X);
 	};
     void createDir(const string& newDirName){
-        auto * X = new Directory(newDirName);
+        auto X = new Directory(newDirName);
         List.push_back(X);
     }
     Properties getProperties() override {
@@ -157,10 +162,13 @@ int main()
     auto * rootDir = new Directory("rootDir");
     currentDir = rootDir;
 
-    currentDir->createFile("N", 3);
+    currentDir->createFile("Nonjnk", 3);
     memView();
-    currentDir->createFile("N1", 5);
+    currentDir->createFile("N2", 3);
     memView();
-
+    currentDir->createFile("N5", 3);
+    memView();
+    currentDir->Delete("N2");
+    memView();
     return 0;
 };
