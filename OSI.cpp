@@ -10,6 +10,7 @@ struct Properties;
 class Note;
 class File;
 class Directory;
+vector<Properties *> allFiles;
 Directory * currentDir;
 
 /*class Block {
@@ -67,6 +68,7 @@ public:
         for (auto i : HDD){
             if (end - start + 1 == properties.size) {
                 properties.start = start;
+                allFiles.push_back(&properties);
                 for (;start <= end; start++){
                     HDD[start] = true;
                 }
@@ -108,6 +110,9 @@ public:
 	void Delete(const string& target) {
         for (auto i : List) {
             if (i->getProperties().name == target) {
+                for (auto j : allFiles){
+                    if ( j->name == i->getProperties().name) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
+                }
                 delete dynamic_cast<File *>(i);
                 List.erase(remove(List.begin(), List.end(), i), List.end());
                 return;
@@ -127,6 +132,37 @@ public:
         return properties;
 	}
 };
+
+void defragm(){
+    int holeStart = 0;
+    int holeEnd = 0;
+    bool flag = false;
+    int i = 0;
+    while (i != 100){
+        if (!HDD[i] && !flag) {
+            flag = true;
+            holeStart = i;
+        } else if (HDD[i] && flag) {
+            flag = false;
+            holeEnd = i;
+            for (auto k: allFiles) {
+                if (k->start >= holeEnd) {
+                    for (int j = k->start; j < k->start + k->size; j++) {
+                        HDD[j] = false;
+                    }
+                    k->start -= (holeEnd - holeStart);
+                    for (int j = k->start; j < k->start + k->size; j++) {
+                        HDD[j] = true;
+                    }
+                }
+            }
+            holeStart = 0;
+            holeEnd = 0;
+            i = 0;
+        }
+        i++;
+    }
+}
 
 void printDir(Directory * dir) {
     for (auto x : dir->List) {
@@ -162,13 +198,21 @@ int main()
     auto * rootDir = new Directory("rootDir");
     currentDir = rootDir;
 
-    currentDir->createFile("Nonjnk", 3);
+    currentDir->createFile("N1", 2);
     memView();
-    currentDir->createFile("N2", 3);
+    currentDir->createFile("N2", 2);
     memView();
-    currentDir->createFile("N5", 3);
+    currentDir->createFile("N3", 2);
+    memView();
+    currentDir->createFile("N4", 2);
+    memView();
+    currentDir->createFile("N5", 2);
     memView();
     currentDir->Delete("N2");
+    memView();
+    currentDir->Delete("N4");
+    memView();
+    defragm();
     memView();
     return 0;
 };
