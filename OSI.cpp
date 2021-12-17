@@ -151,6 +151,13 @@ public:
         auto X = new File({false, fileName, size, -1});
 		List.push_back(X);
 	};
+    void copy(const string& target){
+        for (auto i : List){
+            if (i->getProperties().name == target){
+                if (!i->getProperties().isDir) createFile(i->getProperties().name + " copy", i->getProperties().size);
+            }
+        }
+    }
     void createDir(const string& newDirName){
         auto X = new Directory(newDirName);
         List.push_back(X);
@@ -240,7 +247,11 @@ int main()
 
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
-
+    currentDir->createFile("file 1", 5);
+    memView();
+    currentDir->copy("file 1");
+    memView();
+    printDir(currentDir);
     /*
     currentDir->createFile("N1", 2);
     memView();
@@ -269,7 +280,6 @@ int main()
 
     closeFile("newFile");
     memView(); */
-
     /*
     currentDir->createDir("new dir");
     changeCurrentDir("new dir");
@@ -282,6 +292,8 @@ int main()
     cout << currentDir->name;
     printDir(currentDir);
     memView(); */
+
+
 
     return 0;
 };
