@@ -274,75 +274,7 @@ int main()
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
     movement.push_back(rootDir);
-
-    /*
-    currentDir->createFile("file", 3);
-    currentDir->createDir("1");
-    changeCurrentDir("1");
-    currentDir->createFile("fi", 2);
-    currentDir->createDir("di");
-    currentDir = rootDir;
-    copy("1");
-    goTo("1 copy");
-    memView();
-
-    printDir(currentDir); */
-    /*  auto* Dir1 = new Directory;
-	Dir1->CreateFile("File1", 1);
-	Dir1->CreateFile("File2", 1);
-	Directory dir;
-	dir.List.push_back(Dir1);
-	dir.CreateFile("MainDirFile", 10);
-    dir.Print();
-*/
-    /*
-    currentDir->createFile("file 1", 5);
-    memView();
-    currentDir->copy("file 1");
-    memView();
-    printDir(currentDir); */
-    /*
-    currentDir->createFile("N1", 2);
-    memView();
-    currentDir->createFile("N2", 2);
-    memView();
-    currentDir->createFile("N3", 2);
-    memView();
-    currentDir->createFile("N4", 2);
-    memView();
-    currentDir->createFile("N5", 2);
-    memView();
-    currentDir->Delete("N2");
-    memView();
-    currentDir->Delete("N4");
-    memView();
-    defragm();
-    memView(); */
-    /*
-    currentDir->createFile("newFile", 10);
-    currentDir->createFile("newFile1", 10);
-    memView();
-
-    openFile("newFile");
-    openFile("newFile1");
-    memView();
-
-    closeFile("newFile");
-    memView(); */
-    /*
-    currentDir->createDir("new dir");
-    goTo("new dir");
-    currentDir->createFile("file1", 4);
-    currentDir->createFile("file2", 4);
-    printDir(currentDir);
-    memView();
-    cout << endl;
-    rootDir->Delete("new dir");
-    cout << currentDir->name;
-    printDir(currentDir);
-    memView(); */
-
-
+    
 
     return 0;
 };
