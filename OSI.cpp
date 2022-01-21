@@ -329,6 +329,19 @@ void chmod(const string &target) {
         }
     }
 }
+vector<string> find(string& target){
+    vector<string> arr;
+    char first = target[0];
+    if (first == '*'){
+        target = target.substr(1);
+    }
+    for (auto i : currentDir->List){
+        if (i->getProperties().name.find(target) != string::npos){
+            arr.push_back(i->getProperties().name);
+        }
+    }
+    return arr;
+}
 
 int main()
 {
@@ -382,7 +395,9 @@ int main()
             defragm();
         }else if (command == "find"){
             cin >> name;
-
+            for (const auto& i : find(name)){
+                cout << i << endl;
+            }
         }else if (command == "chmod"){
             cin >> name;
             chmod(name);
