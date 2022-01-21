@@ -54,6 +54,8 @@ struct Properties{
     bool isDir;
     string name;
     int size, startHDD, startRAM;
+    bool isPtr = false;
+    string parentName = "None";
 };
 
 class Note {
@@ -67,21 +69,25 @@ class File :public Note {
 public:
     Properties properties;
 	explicit File(Properties _properties) : properties(move(_properties)){
-        int start = 0, end = 0;
-        for (auto i : HDD){
-            if (end - start + 1 == properties.size) {
-                properties.startHDD = start;
-                allFiles.push_back(&properties);
-                for (;start <= end; start++){
-                    HDD[start] = true;
+        if (!properties.isPtr){
+            int start = 0, end = 0;
+            for (auto i : HDD){
+                if (end - start + 1 == properties.size) {
+                    properties.startHDD = start;
+                    allFiles.push_back(&properties);
+                    for (;start <= end; start++){
+                        HDD[start] = true;
+                    }
+                    break;
                 }
-                break;
+                else if (!i && end - start < properties.size) end++;
+                else if (i && end - start < properties.size) {
+                    start = end + 1;
+                    end++;
+                }
             }
-            else if (!i && end - start < properties.size) end++;
-            else if (i && end - start < properties.size) {
-                start = end + 1;
-                end++;
-            }
+        } else {
+
         }
     };
     ~File(){
@@ -145,7 +151,7 @@ public:
         for (auto i : List) {
             if (i->getProperties().name == target) {
                 for (auto j : allFiles){
-                    if ( j->name == i->getProperties().name) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
+                    if ( j->name == i->getProperties().name) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());   // erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
                 }
                 if (i->getProperties().isDir) delete dynamic_cast<Directory *>(i);
                 else delete dynamic_cast<File *>(i);
@@ -159,6 +165,12 @@ public:
         auto X = new File({false, fileName, size, -1});
 		List.push_back(X);
 	};
+
+    void createFileWeakPtr(const string& ptrName, const string& parentName) {
+        auto X = new File({false, ptrName, 0, -1, -1, true, parentName});
+        List.push_back(X);
+    };
+
     Note * copy(Note * file) override{
         // create dir
         // fill dir
@@ -244,13 +256,15 @@ void memView(){
 
 void openFile(const string& target){
     for (auto i : currentDir->List){
-        if (i->getProperties().name == target) dynamic_cast<File *>(i)->open();
+        if (i->getProperties().name == target && !i->getProperties().isPtr) dynamic_cast<File *>(i)->open();
+        else if (i->getProperties().name == target && i->getProperties().isPtr) openFile(i->getProperties().parentName);
     }
 }
 
 void closeFile(const string& target){
     for (auto i : currentDir->List){
-        if (i->getProperties().name == target) dynamic_cast<File *>(i)->close();
+        if (i->getProperties().name == target && !i->getProperties().isPtr) dynamic_cast<File *>(i)->close();
+        else if (i->getProperties().name == target && i->getProperties().isPtr) closeFile(i->getProperties().parentName);
     }
 }
 
@@ -274,7 +288,12 @@ int main()
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
     movement.push_back(rootDir);
-    
-
+    currentDir->createFile("paren", 3);
+    currentDir->createFileWeakPtr("ptr", "paren");
+    openFile("ptr");
+    memView();
+    closeFile("ptr");
+    memView();
+    printDir(currentDir);
     return 0;
 };
