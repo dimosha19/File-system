@@ -7,59 +7,59 @@
 2) **mkdir** -
 Создает в текущей директории каталог с именем которое необходимо передать [обращаем внимание на то, что пробелы в имени недопустимы!] `mkdir dirname`
 
-![img.png](img.png)
+![img.png](sourse/img.png)
 
 3)**touch** - 
 Создает в текущей директории файл с именем и весом, которые мы передаем заранее [обращаем внимание на то, что пробелы в имени недопустимы!] `touch fileName 5`
 
-![img_1.png](img_1.png)
+![img_1.png](sourse/img_1.png)
 
 4) **open** - 
 Отрывает файл (переносит его содержимое в RAM), если файл executable `open file`
 
-![img_2.png](img_2.png)
+![img_2.png](sourse/img_2.png)
 
 5) **close** - 
 Закрывает файл (вычищает его из RAM) `close file`
 
-![img_3.png](img_3.png)
+![img_3.png](sourse/img_3.png)
 
 6) **cd** - 
 Позволяет перейти в следующий каталог `cd nextDir` или опуститься на уровень ниже `cd ..` 
 
-![img_5.png](img_5.png)
+![img_5.png](sourse/img_5.png)
 
 7) **ls** - 
 Выводит содержимое каталога `ls`
 
-![img_6.png](img_6.png)
+![img_6.png](sourse/img_6.png)
 
 8) **copy** - 
 копирует файл\директорию `copy something`
 
-![img_7.png](img_7.png)
+![img_7.png](sourse/img_7.png)
 
 9) **touchweak** - 
 создает символическую ссылку на файл `touchweak ptr parent` ptr - имя ссылки, parent - куда смотрит ссылка, при действии open открывает родительский файл
 
-![img_8.png](img_8.png)
+![img_8.png](sourse/img_8.png)
 
 10) **rm** - 
 удаляет содержимое каталога по имени `rm file`
 
-![img_9.png](img_9.png)
+![img_9.png](sourse/img_9.png)
 
 11) **mw** - 
 выводит табличку 2*30 показывая заполнение HDD и RAM `mw`
 
-![img_10.png](img_10.png)
+![img_10.png](sourse/img_10.png)
 
 12) **find** - 
 выводит содержимое каталога по совпадению `find fi` , `find *.txt`
 
-![img_11.png](img_11.png)
+![img_11.png](sourse/img_11.png)
 
 13) **chmod** - 
 меняет параметр executable выбранного файла `chmod file`
 
-![img_12.png](img_12.png)
+![img_12.png](sourse/img_12.png)
