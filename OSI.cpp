@@ -256,9 +256,16 @@ void memView(){
 
 void openFile(const string& target){
     for (auto i : currentDir->List){
-        if (i->getProperties().name == target && !i->getProperties().isPtr) dynamic_cast<File *>(i)->open();
-        else if (i->getProperties().name == target && i->getProperties().isPtr) openFile(i->getProperties().parentName);
+        if (i->getProperties().name == target && !i->getProperties().isPtr) {
+            dynamic_cast<File *>(i)->open();
+            return;
+        }
+        else if (i->getProperties().name == target && i->getProperties().isPtr) {
+            openFile(i->getProperties().parentName);
+            return;
+        }
     }
+    cout << "No such file (or parent file)"<< endl;
 }
 
 void closeFile(const string& target){
@@ -268,7 +275,7 @@ void closeFile(const string& target){
     }
 }
 
-void copy(const string & target){
+void copy(const string & target){ //TODO проверить на копирование ярлыка
     for (auto i : currentDir->List){
         if (i->getProperties().name == target) {
             currentDir->List.push_back(i->copy(i));
@@ -276,11 +283,13 @@ void copy(const string & target){
     }
 }
 
-void path(){
+string path(){
+    string s;
     for (auto i: movement){
-        cout << i->getProperties().name << "/";
+        s += i->getProperties().name;
+        s+="/";
     }
-    cout << endl;
+    return s;
 }
 
 int main()
@@ -288,12 +297,45 @@ int main()
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
     movement.push_back(rootDir);
-    currentDir->createFile("paren", 3);
-    currentDir->createFileWeakPtr("ptr", "paren");
-    openFile("ptr");
-    memView();
-    closeFile("ptr");
-    memView();
-    printDir(currentDir);
+    string command, name, parrentName;
+    int size = 3;
+    while (command != "exit"){
+        cout << path() << ": ";
+        cin >> command;
+        // mkdir, touch, open, cd, copy, touchweak, ls, delete
+        if (command == "mkdir"){
+            cin >> name;
+            currentDir->createDir(name);
+        }else if (command == "touch"){
+            cin >> name;
+            currentDir->createFile(name, size);
+        }else if (command == "open"){
+            cin >> name;
+            openFile(name);
+        }else if (command == "close"){
+            cin >> name;
+            closeFile(name);
+        }else if (command == "cd"){
+            cin >> name;
+            if (name == "..") back();
+            else goTo(name);
+        }else if (command == "ls"){
+            printDir(currentDir);
+        }else if (command == "copy"){
+            cin >> name;
+            copy(name);
+        }else if (command == "touchweak"){
+            cin >> name;
+            cin >> parrentName;
+            currentDir->createFileWeakPtr(name, parrentName);
+        }else if (command == "delete"){
+            cin >> name;
+            currentDir->Delete(name);
+        }else if (command == "mw"){
+            memView();
+        }else{
+            cout << "No such command" << endl;
+        }
+        }
     return 0;
 };
