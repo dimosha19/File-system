@@ -4,8 +4,8 @@
 #include "memory"
 
 using namespace std;
-bool HDD[100];
-bool RAM[100];
+bool HDD[30];
+bool RAM[30];
 struct Properties;
 class Note;
 class Directory;
@@ -65,25 +65,63 @@ public:
     virtual Note* copy(Note* file) = 0;
 };
 
+void defragm(){
+    int holeStart = 0;
+    int holeEnd = 0;
+    bool flag = false;
+    int i = 0;
+    while (i != 30){
+        if (!HDD[i] && !flag) {
+            flag = true;
+            holeStart = i;
+        } else if (HDD[i] && flag) {
+            flag = false;
+            holeEnd = i;
+            for (auto k: allFiles) {
+                if (k->startHDD >= holeEnd) {
+                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
+                        HDD[j] = false;
+                    }
+                    k->startHDD -= (holeEnd - holeStart);
+                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
+                        HDD[j] = true;
+                    }
+                }
+            }
+            holeStart = 0;
+            holeEnd = 0;
+            i = 0;
+        }
+        i++;
+    }
+}
+
 class File :public Note {
 public:
     Properties properties;
 	explicit File(Properties _properties) : properties(move(_properties)){
         if (!properties.isPtr){
-            int start = 0, end = 0;
-            for (auto i : HDD){
-                if (end - start + 1 == properties.size) {
-                    properties.startHDD = start;
-                    allFiles.push_back(&properties);
-                    for (;start <= end; start++){
-                        HDD[start] = true;
+            for (int k = 0; k < 2; k++) {
+                int start = 0, end = 0;
+                for (auto i: HDD) {
+                    if (end - start == properties.size) {
+                        properties.startHDD = start;
+                        allFiles.push_back(&properties);
+                        for (; start < end; start++) {
+                            HDD[start] = true;
+                        }
+                        k = 3;
+                        break;
+                    } else if (!i && end - start < properties.size) {
+                        end++;
+                    } else if (i && end - start < properties.size) {
+                        start = end + 1;
+                        end++;
                     }
-                    break;
                 }
-                else if (!i && end - start < properties.size) end++;
-                else if (i && end - start < properties.size) {
-                    start = end + 1;
-                    end++;
+                if (k != 3) defragm();
+                if (k == 2) {
+                    cout << "not enough storage";
                 }
             }
         } else {
@@ -97,7 +135,7 @@ public:
     }
     Note * copy(Note* file) override {
         Properties copiedProp = file->getProperties();
-        copiedProp.name+= " copy";
+        copiedProp.name+= "_copy";
         return new File(copiedProp);
     }
 	void open() override {
@@ -128,7 +166,7 @@ public:
 	}
 
 };
- 
+
 class Directory :public Note {
 
 public:
@@ -181,7 +219,7 @@ public:
         // create dir
         // fill dir
         // return * dir
-        auto * copy = new Directory(name + " copy");
+        auto * copy = new Directory(name + "_copy");
         for (auto i : List){
             copy->List.push_back(i->copy(i));
         }
@@ -195,37 +233,6 @@ public:
         return properties;
 	}
 };
-
-void defragm(){
-    int holeStart = 0;
-    int holeEnd = 0;
-    bool flag = false;
-    int i = 0;
-    while (i != 100){
-        if (!HDD[i] && !flag) {
-            flag = true;
-            holeStart = i;
-        } else if (HDD[i] && flag) {
-            flag = false;
-            holeEnd = i;
-            for (auto k: allFiles) {
-                if (k->startHDD >= holeEnd) {
-                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
-                        HDD[j] = false;
-                    }
-                    k->startHDD -= (holeEnd - holeStart);
-                    for (int j = k->startHDD; j < k->startHDD + k->size; j++) {
-                        HDD[j] = true;
-                    }
-                }
-            }
-            holeStart = 0;
-            holeEnd = 0;
-            i = 0;
-        }
-        i++;
-    }
-}
 
 void printDir(Directory * dir) {
     for (auto x : dir->List) {
@@ -321,6 +328,7 @@ int main()
             currentDir->createDir(name);
         }else if (command == "touch"){
             cin >> name;
+            cin >> size;
             currentDir->createFile(name, size);
         }else if (command == "open"){
             cin >> name;
@@ -341,11 +349,13 @@ int main()
             cin >> name;
             cin >> parrentName;
             currentDir->createFileWeakPtr(name, parrentName);
-        }else if (command == "delete"){
+        }else if (command == "rm"){
             cin >> name;
             currentDir->Delete(name);
         }else if (command == "mw"){
             memView();
+        }else if (command == "defrag"){
+            defragm();
         }else{
             cout << "No such command" << endl;
         }
