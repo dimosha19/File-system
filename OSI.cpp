@@ -1,7 +1,6 @@
 #include <iostream>
 #include <utility>
 #include <vector>
-#include "memory"
 
 using namespace std;
 bool HDD[30];
@@ -14,6 +13,11 @@ vector<Properties *> allFiles;
 vector<Directory *> movement;
 Directory * currentDir;
 Directory * rootDir;
+unsigned char isReadable;
+unsigned char isExecutable;
+unsigned char isWriteable;
+unsigned char isArchived;
+unsigned char isHidden;
 
 /*class Block {
 public:
@@ -56,6 +60,7 @@ struct Properties{
     int size, startHDD, startRAM;
     bool isPtr = false;
     File* parent = nullptr;
+    unsigned char mod = 0;
 };
 
 class Note {
@@ -100,6 +105,7 @@ class File :public Note {
 public:
     Properties properties;
 	explicit File(Properties _properties) : properties(move(_properties)){
+        properties.mod |= isReadable | isWriteable | isExecutable;
         if (!properties.isPtr){
             for (int k = 0; k < 2; k++) {
                 int start = 0, end = 0;
@@ -121,11 +127,9 @@ public:
                 }
                 if (k != 3) defragm();
                 if (k == 2) {
-                    cout << "not enough storage";
+                    cout << "not enough storage" << endl;
                 }
             }
-        } else {
-
         }
     };
     ~File(){
@@ -133,27 +137,34 @@ public:
             HDD[i] = false;
         }
     }
+    void chmod(){
+        properties.mod ^= isExecutable;
+    }
     Note * copy(Note* file) override {
         Properties copiedProp = file->getProperties();
         copiedProp.name+= "_copy";
         return new File(copiedProp);
     }
 	void open() override {
-        int start = 0, end = 0;
-        for (auto i : RAM){
-            if (end - start + 1 == properties.size) {
-                properties.startRAM = start;
-                allFiles.push_back(&properties);
-                for (;start <= end; start++){
-                    RAM[start] = true;
+        if (static_cast<bool>(properties.mod & isExecutable)){
+            int start = 0, end = 0;
+            for (auto i : RAM){
+                if (end - start + 1 == properties.size) {
+                    properties.startRAM = start;
+                    allFiles.push_back(&properties);
+                    for (;start <= end; start++){
+                        RAM[start] = true;
+                    }
+                    break;
                 }
-                break;
+                else if (!i && end - start < properties.size) end++;
+                else if (i && end - start < properties.size) {
+                    start = end + 1;
+                    end++;
+                }
             }
-            else if (!i && end - start < properties.size) end++;
-            else if (i && end - start < properties.size) {
-                start = end + 1;
-                end++;
-            }
+        } else {
+            cout << "file not executable" << endl;
         }
 	}
     void close() const{
@@ -256,13 +267,13 @@ void back(){
 
 void memView(){
     cout << "HDD: [ ";
-    for (int i = 0; i < 30; i++){
-         cout << HDD[i];
+    for (bool i : HDD){
+         cout << i;
     }
     cout << " ]" << endl;
     cout << "RAM: [ ";
-    for (int i = 0; i < 30; i++){
-        cout << RAM[i];
+    for (bool i : RAM){
+        cout << i;
     }
     cout << " ]" << endl;
 }
@@ -294,7 +305,7 @@ void closeFile(const string& target){
     }
 }
 
-void copy(const string & target){ //TODO проверить на копирование ярлыка
+void copy(const string & target){
     for (auto i : currentDir->List){
         if (i->getProperties().name == target) {
             currentDir->List.push_back(i->copy(i));
@@ -310,6 +321,14 @@ string path(){
     }
     return s;
 }
+// [rwe]
+void chmod(const string &target) {
+    for (auto i : currentDir->List){
+        if (i->getProperties().name == target && !i->getProperties().isDir) {
+            dynamic_cast<File *>(i)->chmod();
+        }
+    }
+}
 
 int main()
 {
@@ -318,6 +337,11 @@ int main()
     movement.push_back(currentDir);
     string command, name, parrentName;
     int size = 3;
+    isReadable = 0x01;
+    isExecutable = 0x02;
+    isWriteable = 0x04;
+    isArchived = 0x08;
+    isHidden = 0x10;
 
     while (command != "exit"){
         cout << path() << ":";
@@ -356,6 +380,12 @@ int main()
             memView();
         }else if (command == "defrag"){
             defragm();
+        }else if (command == "find"){
+            cin >> name;
+
+        }else if (command == "chmod"){
+            cin >> name;
+            chmod(name);
         }else{
             cout << "No such command" << endl;
         }
