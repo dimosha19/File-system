@@ -55,7 +55,7 @@ struct Properties{
     string name;
     int size, startHDD, startRAM;
     bool isPtr = false;
-    string parentName = "None";
+    File* parent = nullptr;
 };
 
 class Note {
@@ -96,7 +96,9 @@ public:
         }
     }
     Note * copy(Note* file) override {
-        return new File({false, file->getProperties().name + " copy", file->getProperties().size, -1});
+        Properties copiedProp = file->getProperties();
+        copiedProp.name+= " copy";
+        return new File(copiedProp);
     }
 	void open() override {
         int start = 0, end = 0;
@@ -167,8 +169,12 @@ public:
 	};
 
     void createFileWeakPtr(const string& ptrName, const string& parentName) {
-        auto X = new File({false, ptrName, 0, -1, -1, true, parentName});
-        List.push_back(X);
+        for (auto i : List){
+            if (i->getProperties().name == parentName) {
+                auto X = new File({false, ptrName, 0, -1, -1, true, dynamic_cast<File *>(i)});
+                List.push_back(X);
+            }
+        }
     };
 
     Note * copy(Note * file) override{
@@ -238,7 +244,7 @@ void goTo(const string& target){
 void back(){
     if (movement.size() == 1) return;
     movement.pop_back();
-    currentDir = movement[-1];
+    currentDir = movement.back();
 }
 
 void memView(){
@@ -261,7 +267,7 @@ void openFile(const string& target){
             return;
         }
         else if (i->getProperties().name == target && i->getProperties().isPtr) {
-            openFile(i->getProperties().parentName);
+            i->getProperties().parent->open();
             return;
         }
     }
@@ -270,8 +276,14 @@ void openFile(const string& target){
 
 void closeFile(const string& target){
     for (auto i : currentDir->List){
-        if (i->getProperties().name == target && !i->getProperties().isPtr) dynamic_cast<File *>(i)->close();
-        else if (i->getProperties().name == target && i->getProperties().isPtr) closeFile(i->getProperties().parentName);
+        if (i->getProperties().name == target && !i->getProperties().isPtr) {
+            dynamic_cast<File *>(i)->close();
+            break;
+        }
+        else if (i->getProperties().name == target && i->getProperties().isPtr) {
+            i->getProperties().parent->close();
+            break;
+        }
     }
 }
 
@@ -279,7 +291,7 @@ void copy(const string & target){ //TODO проверить на копиров�
     for (auto i : currentDir->List){
         if (i->getProperties().name == target) {
             currentDir->List.push_back(i->copy(i));
-        };
+        }
     }
 }
 
@@ -296,11 +308,12 @@ int main()
 {
     rootDir = new Directory("rootDir");
     currentDir = rootDir;
-    movement.push_back(rootDir);
+    movement.push_back(currentDir);
     string command, name, parrentName;
     int size = 3;
+
     while (command != "exit"){
-        cout << path() << ": ";
+        cout << path() << ":";
         cin >> command;
         // mkdir, touch, open, cd, copy, touchweak, ls, delete
         if (command == "mkdir"){
@@ -338,4 +351,4 @@ int main()
         }
         }
     return 0;
-};
+}
