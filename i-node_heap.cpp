@@ -154,7 +154,10 @@ public:
     Note * copy(Note* file) override {
         Properties copiedProp = file->getProperties();
         copiedProp.name = ToChar(copiedProp.GetName(), "_copy");
-        return new File(copiedProp);
+        copiedProp.nodeRAM.clear();
+        copiedProp.nodeHDD.clear();
+        Note * newfile = new File(copiedProp);
+        return newfile;
     }
 	void open() override {
         if (static_cast<bool>(properties.mod & isExecutable)){

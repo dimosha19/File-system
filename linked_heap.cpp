@@ -201,6 +201,7 @@ public:
     Note * copy(Note* file) override {
         Properties copiedProp = file->getProperties();
         copiedProp.name = ToChar(copiedProp.GetName(), "_copy");
+        copiedProp.l = new list;
         return new File(copiedProp);
     }
 	void open() override {
