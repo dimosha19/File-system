@@ -279,16 +279,21 @@ void memView(){
 }
 
 void openFile(const string& target){
-    for (auto i : currentDir->List){
+    for (auto i : currentDir->List) {
         if (i->getProperties().name == target && !i->getProperties().isPtr) {
             dynamic_cast<File *>(i)->open();
             return;
-        }
-        else if (i->getProperties().name == target && i->getProperties().isPtr) {
+        } else if (i->getProperties().name == target && i->getProperties().isPtr) {
             i->getProperties().parent->open();
             return;
         }
     }
+    /*
+     touch file 4
+     touchweak ptr file
+     rm file
+     open ptr
+    */
     cout << "No such file (or parent file)"<< endl;
 }
 
