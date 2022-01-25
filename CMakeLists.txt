@@ -2,4 +2,4 @@ cmake_minimum_required(VERSION 3.13)  # CMake version check
 project(tests)               # Create project "simple_example"
 set(CMAKE_CXX_STANDARD 20)            # Enable c++14 standard
 
-add_executable(tests fat_heap.cpp)
+add_executable(tests fat_align.cpp)

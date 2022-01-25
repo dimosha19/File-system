@@ -27,12 +27,6 @@ int FirstPointerFinderHDD(){
     }
     return -3;
 }
-int FirstPointerFinderRAM(){
-    for (int i = 0; i < 30; i++) {
-        if (!RAM[i]) return i;
-    }
-    return -3;
-}
 
 void PusherHDD(int size, int first){
     int originalSize = size;
@@ -53,6 +47,7 @@ void PusherHDD(int size, int first){
 }
 
 void CleanerHDD(int first){
+    if (first == -1) return;
     while (fat[first] != -1){
         HDD[first] = false;
         first = fat[first];
@@ -197,7 +192,8 @@ public:
     void createFileWeakPtr(const string& ptrName, const string& parentName) {
         for (auto i : List){
             if (i->getProperties().GetName() == parentName) {
-                auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i)});
+
+                auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i), 0, -1});
                 List.push_back(X);
             }
         }
