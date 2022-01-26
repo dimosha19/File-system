@@ -1,0 +1,194 @@
+***********************
+отрытие удаленного файла по ярлыку
+***********************
+ touch file 4
+ touchweak ptr file
+ rm file
+ open ptr
+
+***********************
+копирование ярлыка в другую папку
+***********************
+mkdir dir
+cd dir
+touch file 4
+touchweak ptr file
+cd ..
+copy dir
+cd dir
+rm file
+cd ..
+cd dir_copy
+open ptr_copy
+
+***********************
+создание файла
+***********************
+touch file 2
+touch file1 2
+rm file
+mw
+touch file 3
+mw
+
+***********************
+удаление файла
+***********************
+touch file 3
+touch file2 3
+mw
+rm file
+mw
+rm file2
+mw
+
+***********************
+Открытие файла
+***********************
+touch file1 3
+touch file2 4
+mw
+open file2
+mw
+open file1
+mw
+
+***********************
+Закрытие файла
+***********************
+touch file1 3
+touch file2 4
+mw
+open file2
+mw
+open file1
+mw
+close file2
+mw
+close file1
+mw
+
+***********************
+создание каталога
+***********************
+mkdir dir
+cd dir
+mkdir dir
+cd dir
+touch file 2
+ls
+cd ..
+cd ..
+ls
+
+***********************
+удаление каталога со всем его содержимым
+***********************
+mkdir dir
+cd dir
+mkdir dir
+cd dir
+touch file 2
+cd ..
+cd ..
+mw
+rm dir
+mw
+
+***********************
+копирование файла
+***********************
+touch file 4
+mw
+copy file
+mw
+rm file
+mw
+
+***********************
+копирование каталога
+***********************
+mkdir dir
+cd dir
+mkdir dir
+cd dir
+touch file 2
+cd ..
+cd ..
+mw
+copy dir
+mw
+ls
+cd dir_copy
+ls
+cd dir_copy
+ls
+mw
+
+***********************
+поиск файла по имени (по шаблону)
+***********************
+touch file.txt 1
+touch file.txl 1
+touch alksnvla.txt 1
+find *.txt
+find l
+
+***********************
+создание жесткой ссылки
+***********************
+
+***********************
+удаление жесткой ссылки
+***********************
+touch file 1
+mw
+touchstrong ptr file
+mw
+rm file
+mw
+open ptr
+mw
+close ptr
+mw
+rm ptr
+mw
+
+***********************
+создание символической ссылки
+***********************
+touch file 4
+touchweak ptr file
+open ptr
+mw
+rm file
+mw
+close ptr
+mw
+
+***********************
+удаление символической ссылки
+***********************
+***********************
+символическая ссылка на жесткую ссылку
+***********************
+touch file 1
+touchstrong ptr file
+rm file
+touchweak pptr ptr
+open pptr
+mw
+
+***********************
+удаление открытого файла
+***********************
+touch file 4
+touchstrong ptr file
+open ptr
+mw
+rm file
+mw
+rm ptr
+mw
+
+
