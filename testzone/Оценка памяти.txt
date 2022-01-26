@@ -1,0 +1,45 @@
+I-node_heap:
+Properties{
+summ = 79 byte + записи файла * 4 * 1024
++48 - map в стоке + (8 * количество пар)
+}
+
+I-node_align:
+Properties{
+summ = 103 byte + записи файла * 4 * 1024
++48 - map в стоке + (8 * количество пар)
+}
+
+fat_heap:
+Properties{
+summ = 35 byte + записи файла * 4 * 1024
++120 byte fat
+}
+
+fat_align:
+Properties{
+summ = 59 byte + записи файла * 4 * 1024
++120 byte fat
+}
+
+contiguous_align:
+Properties{
+summ = 59 byte + записи файла * 4 * 1024
+}
+
+contiguous_heap:
+Properties{
+summ = 35 byte + записи файла * 4 * 1024
+}
+
+linked_align:
+Properties{
+summ = 51 byte + записи файла * 4 * 1024
++(24 * линна списка) + 16(структура списка)
+}
+
+linked_heap:
+Properties{
+summ = 27 byte + записи файла * 4 * 1024
++(24 * линна списка) + 16(структура списка)
+}

@@ -68,7 +68,6 @@ struct Properties{
     File* parent = nullptr;
     unsigned char mod = 0;
     map<int, int> nodeHDD;
-    map<int, int> nodeRAM;
     int strongLinks = 0;
     int startRAM = -1;
 
@@ -137,8 +136,8 @@ public:
     Note * copy(Note* file) override {
         Properties copiedProp = file->getProperties();
         copiedProp.name = ToChar(copiedProp.GetName(), "_copy");
-        copiedProp.nodeRAM.clear();
         copiedProp.nodeHDD.clear();
+        copiedProp.startRAM = -1;
         Note * newfile = new File(copiedProp);
         return newfile;
     }
@@ -236,7 +235,7 @@ public:
                 dynamic_cast<File *>(i)->AddLink();
                 X->properties.size = i->getProperties().size;
                 X->properties.nodeHDD = i->getProperties().nodeHDD;
-                X->properties.nodeRAM = i->getProperties().nodeRAM;
+                X->properties.startRAM = i->getProperties().startRAM;
                 allFiles.push_back(&X->properties);
                 List.push_back(X);
             }
