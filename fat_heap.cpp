@@ -137,13 +137,13 @@ public:
         Note * newfile = new File(copiedProp);
         return newfile;
     }
-	void open() override {
-        if (static_cast<bool>(properties.mod & isExecutable && properties.firstRAM == -1)){
+    void open() override {
+        if (static_cast<bool>(properties.mod & isExecutable) && properties.firstRAM == -1){
             int start = 0, end = 0;
             for (auto i : RAM){
-                if (end - start + 1 == properties.size) {
+                if (end - start == properties.size) {
                     properties.firstRAM = start;
-                    for (;start <= end; start++){
+                    for (;start < end; start++){
                         RAM[start] = true;
                     }
                     break;
@@ -155,9 +155,9 @@ public:
                 }
             }
         } else {
-            cout << "file not executable" << endl;
+            cout << "file not executable or already running" << endl;
         }
-	}
+    }
     void close() {
         for (int i = properties.firstRAM; i < properties.size + properties.firstRAM; i++){
             RAM[i] = false;

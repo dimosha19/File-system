@@ -189,3 +189,21 @@ rm file
 mw
 rm ptr
 mw
+***********************
+touch file 2
+open file
+mw
+touch file1 2
+open file1
+mw
+touch file2 2
+open file2
+mw
+rm file1
+mw
+touch file 3
+mw
+open file
+touch file3 3
+mw
+open file3

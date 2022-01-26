@@ -92,55 +92,11 @@ void PusherHDD(int size, list * list){
     }
 }
 
-void PusherRAM(int size, Node * p){
-    int start = -1, end = -1;
-    int i = 0;
-    while (i <= 30 || size >= 0){
-        if (!RAM[i] && start == -1){
-            start = i;
-            size -=1;
-            RAM[i] = true;
-            if (size == 0){
-                end = i + 1;
-                p->startRAM = start;
-                p->endRAM = end;
-                return;
-            }
-        }
-        else if (!RAM[i] && start != -1){
-            size -= 1;
-            RAM[i] = true;
-            if (size == 0) {
-                end = i + 1;
-                p->startRAM = start;
-                p->endRAM = end;
-                return;
-            }
-        }
-        else if (RAM[i] && start != -1){
-            end = i;
-            p->startRAM = start;
-            p->endRAM = end;
-            p = p->next;
-            if (size > 0) return PusherRAM(size, p);
-        }
-        i++;
-    }
-}
-
 void CleanerHDD(list * list){
     Node * p = list->first;
     while (p) {
         int start = p->startHDD, end = p->endHDD;
         for (; start < end; start++) HDD[start] = false;
-        p = p->next;
-    }
-}
-void CleanerRAM(list * list){
-    Node * p = list->first;
-    while (p) {
-        int start = p->startRAM, end = p->endRAM;
-        for (; start < end; start++) RAM[start] = false;
         p = p->next;
     }
 }
@@ -155,6 +111,7 @@ struct Properties{
     unsigned char mod = 0;
     list * l = new list;
     int strongLinks = 0;
+    int firstRAM = -1;
 };
 
 class Note {
@@ -203,15 +160,31 @@ public:
         copiedProp.l = new list;
         return new File(copiedProp);
     }
-	void open() override {
-        if (static_cast<bool>(properties.mod & isExecutable && properties.l->first->startRAM == -1)){
-            PusherRAM(properties.size, properties.l->first);
+    void open() override {
+        if (static_cast<bool>(properties.mod & isExecutable) && properties.firstRAM == -1){
+            int start = 0, end = 0;
+            for (auto i : RAM){
+                if (end - start == properties.size) {
+                    properties.firstRAM = start;
+                    for (;start < end; start++){
+                        RAM[start] = true;
+                    }
+                    break;
+                }
+                else if (!i && end - start < properties.size) end++;
+                else if (i && end - start < properties.size) {
+                    start = end + 1;
+                    end++;
+                }
+            }
         } else {
-            cout << "file not executable" << endl;
+            cout << "file not executable or already running" << endl;
         }
-	}
+    }
     void close() const{
-        CleanerRAM(properties.l);
+        for (int i = properties.firstRAM; i < properties.size + properties.firstRAM; i++){
+            RAM[i] = false;
+        }
     }
     Properties getProperties() override {
         return properties;
