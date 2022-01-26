@@ -123,7 +123,6 @@ cd dir_copy
 ls
 cd dir_copy
 ls
-mw
 
 ***********************
 поиск файла по имени (по шаблону)
@@ -163,8 +162,6 @@ open ptr
 mw
 rm file
 mw
-close ptr
-mw
 
 ***********************
 удаление символической ссылки
@@ -178,6 +175,8 @@ rm file
 touchweak pptr ptr
 open pptr
 mw
+close pptr
+mw
 
 ***********************
 удаление открытого файла
@@ -190,5 +189,3 @@ rm file
 mw
 rm ptr
 mw
-
-

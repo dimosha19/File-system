@@ -142,7 +142,7 @@ public:
         return newfile;
     }
     void open() override {
-        if (static_cast<bool>(properties.mod & isExecutable)){
+        if (static_cast<bool>(properties.mod & isExecutable && properties.startRAM == -1)){
             int start = 0, end = 0;
             for (auto i : RAM){
                 if (end - start + 1 == properties.size) {
@@ -327,7 +327,8 @@ void closeFile(const string& target){
             break;
         }
         else if (i->getProperties().GetName() == target && i->getProperties().isPtr) {
-            i->getProperties().parent->close();
+            if (i->getProperties().size!=0)dynamic_cast<File *>(i)->close();
+            else i->getProperties().parent->close();
             break;
         }
     }

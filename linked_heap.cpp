@@ -111,7 +111,7 @@ void PusherRAM(int size, Node * p){
             size -= 1;
             RAM[i] = true;
             if (size == 0) {
-                end = start + 1;
+                end = i + 1;
                 p->startRAM = start;
                 p->endRAM = end;
                 return;
@@ -225,7 +225,7 @@ public:
         return new File(copiedProp);
     }
 	void open() override {
-        if (static_cast<bool>(properties.mod & isExecutable)){
+        if (static_cast<bool>(properties.mod & isExecutable && properties.l->first->startRAM == -1)){
             PusherRAM(properties.size, properties.l->first);
         } else {
             cout << "file not executable" << endl;
@@ -392,7 +392,8 @@ void closeFile(const string& target){
             break;
         }
         else if (i->getProperties().GetName() == target && i->getProperties().isPtr) {
-            i->getProperties().parent->close();
+            if (i->getProperties().size!=0)dynamic_cast<File *>(i)->close();
+            else i->getProperties().parent->close();
             break;
         }
     }
