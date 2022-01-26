@@ -2,6 +2,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <regex>
 
 using namespace std;
 bool HDD[30]; // При изменении обратить внимание на конструктор файла и метод открытия
@@ -52,48 +53,10 @@ void PusherHDD(int size, map<int, int>& node){
     }
 }
 
-void PusherRAM(int size, map<int, int>& node){
-    int start = -1, end = -1;
-    int i = 0;
-    while (i <= 30 || size >= 0){
-        if (!RAM[i] && start == -1){
-            start = i;
-            size -=1;
-            RAM[i] = true;
-            if (size == 0){
-                end = start + 1;
-                node[start] = end;
-                return;
-            }
-        }
-        else if (!RAM[i] && start != -1){
-            size -= 1;
-            RAM[i] = true;
-            if (size == 0){
-                end = i + 1;
-                node[start] = end;
-                return;
-            }
-        }
-        else if (RAM[i] && start != -1){
-            end = i;
-            node[start] = end;
-            if (size > 0) return PusherRAM(size, node);
-        }
-        i++;
-    }
-}
-
 void CleanerHDD(map<int, int>& node){
     for (auto i : node) {
         int start = i.first, end = i.second;
         for (; start < end; start++) HDD[start] = false;
-    }
-}
-void CleanerRAM(map<int, int>& node){
-    for (auto i : node) {
-        int start = i.first, end = i.second;
-        for (; start < end; start++) RAM[start] = false;
     }
 }
 
@@ -106,6 +69,8 @@ struct Properties{
     unsigned char mod = 0;
     map<int, int> nodeHDD;
     map<int, int> nodeRAM;
+    int strongLinks = 0;
+    int startRAM = -1;
 
     string GetName() const{
         string sname;
@@ -141,12 +106,30 @@ public:
     Properties properties;
 	explicit File(Properties _properties) : properties(_properties){
         properties.mod |= isReadable | isWriteable | isExecutable;
-        if (!properties.isPtr){
+        if (properties.size > 0){
             PusherHDD(properties.size, properties.nodeHDD);
+            allFiles.push_back(&properties);
         }
     };
     ~File(){
+        close();
         CleanerHDD(properties.nodeHDD);
+    }
+    void del(){
+        if (properties.isPtr){
+            if (properties.size!=0){
+                properties.parent->properties.strongLinks--;
+                if (properties.parent->properties.strongLinks==0) delete this;
+                return;
+            } else {
+                return;
+            }
+        }if (properties.strongLinks > 1){
+            properties.strongLinks--;
+            return;
+        } else if (properties.strongLinks == 1) {
+            delete this;
+        }
     }
     void chmod(){
         properties.mod ^= isExecutable;
@@ -159,19 +142,42 @@ public:
         Note * newfile = new File(copiedProp);
         return newfile;
     }
-	void open() override {
+    void open() override {
         if (static_cast<bool>(properties.mod & isExecutable)){
-            PusherRAM(properties.size, properties.nodeRAM);
+            int start = 0, end = 0;
+            for (auto i : RAM){
+                if (end - start + 1 == properties.size) {
+                    properties.startRAM = start;
+                    allFiles.push_back(&properties);
+                    for (;start <= end; start++){
+                        RAM[start] = true;
+                    }
+                    break;
+                }
+                else if (!i && end - start < properties.size) end++;
+                else if (i && end - start < properties.size) {
+                    start = end + 1;
+                    end++;
+                }
+            }
         } else {
             cout << "file not executable" << endl;
         }
-	}
-    void close() {
-        CleanerRAM(properties.nodeRAM);
+    }
+    void close() const{
+        for (int i = properties.startRAM; i < properties.size + properties.startRAM; i++){
+            RAM[i] = false;
+        }
     }
     Properties getProperties() override {
         return properties;
 	}
+    void AddLink(){
+        properties.strongLinks++;
+    }
+    void DeductLink(){
+        properties.strongLinks--;
+    }
 
 };
 
@@ -202,7 +208,7 @@ public:
                     if ( j->GetName() == i->getProperties().GetName()) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());   // erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
                 }
                 if (i->getProperties().isDir) delete dynamic_cast<Directory *>(i);
-                else delete dynamic_cast<File *>(i);
+                else dynamic_cast<File *>(i)->del();
                 List.erase(remove(List.begin(), List.end(), i), List.end());
                 return;
             }
@@ -211,13 +217,27 @@ public:
 	}
 	void createFile(const string& fileName, int size) {
         auto X = new File({false, ToChar(fileName, ""), size});
-		List.push_back(X);
+        X->properties.strongLinks++;
+        List.push_back(X);
 	};
 
     void createFileWeakPtr(const string& ptrName, const string& parentName) {
         for (auto i : List){
             if (i->getProperties().GetName() == parentName) {
                 auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i)});
+                List.push_back(X);
+            }
+        }
+    };
+    void createFileStrongPtr(const string& ptrName, const string& parentName) {
+        for (auto i : List){
+            if (i->getProperties().name == parentName) {
+                auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i)});
+                dynamic_cast<File *>(i)->AddLink();
+                X->properties.size = i->getProperties().size;
+                X->properties.nodeHDD = i->getProperties().nodeHDD;
+                X->properties.nodeRAM = i->getProperties().nodeRAM;
+                allFiles.push_back(&X->properties);
                 List.push_back(X);
             }
         }
@@ -283,7 +303,18 @@ void openFile(const string& target){
             return;
         }
         else if (i->getProperties().GetName() == target && i->getProperties().isPtr) {
-            i->getProperties().parent->open();
+            if (i->getProperties().size!=0){
+                dynamic_cast<File *>(i)->open();
+                return;
+            } else{
+                for (auto j : allFiles){
+                    if (j == &i->getProperties().parent->properties) {
+                        i->getProperties().parent->open();
+                        return;
+                    }
+                }
+            }
+            cout << "No parent" << endl;
             return;
         }
     }
@@ -330,8 +361,14 @@ void chmod(const string &target) {
 vector<string> find(string& target){
     vector<string> arr;
     char first = target[0];
+    regex r(R"(\w*.txt)");
     if (first == '*'){
-        target = target.substr(1);
+        for (auto i : currentDir->List){
+            if (regex_match(i->getProperties().GetName(), r)){
+                arr.push_back(i->getProperties().GetName());
+            }
+        }
+        return arr;
     }
     for (auto i : currentDir->List){
         if (i->getProperties().GetName().find(target) != string::npos){
@@ -384,6 +421,10 @@ int main()
             cin >> name;
             cin >> parrentName;
             currentDir->createFileWeakPtr(name, parrentName);
+        }else if (command == "touchstrong") {
+            cin >> name;
+            cin >> parrentName;
+            currentDir->createFileStrongPtr(name, parrentName);
         }else if (command == "rm"){
             cin >> name;
             currentDir->Delete(name);

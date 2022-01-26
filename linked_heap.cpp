@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <regex>
 
 using namespace std;
 bool HDD[30]; // При изменении обратить внимание на конструктор файла и метод открытия
@@ -102,7 +103,7 @@ void PusherRAM(int size, Node * p){
             if (size == 0){
                 end = i + 1;
                 p->startRAM = start;
-                p->startRAM = end;
+                p->endRAM = end;
                 return;
             }
         }
@@ -112,14 +113,14 @@ void PusherRAM(int size, Node * p){
             if (size == 0) {
                 end = start + 1;
                 p->startRAM = start;
-                p->startRAM = end;
+                p->endRAM = end;
                 return;
             }
         }
         else if (RAM[i] && start != -1){
             end = i;
             p->startRAM = start;
-            p->startRAM = end;
+            p->endRAM = end;
             p = p->next;
             if (size > 0) return PusherRAM(size, p);
         }
@@ -153,6 +154,7 @@ struct Properties{
     File* parent = nullptr;
     unsigned char mod = 0;
     list * l = new list;
+    int strongLinks = 0;
 
     string GetName() const{
         string sname;
@@ -188,12 +190,30 @@ public:
     Properties properties;
 	explicit File(Properties _properties) : properties(_properties){
         properties.mod |= isReadable | isWriteable | isExecutable;
-        if (!properties.isPtr){
+        if (properties.size > 0){
             PusherHDD(properties.size, properties.l);
+            allFiles.push_back(&properties);
         }
     };
     ~File(){
+        close();
         CleanerHDD(properties.l);
+    }
+    void del(){
+        if (properties.isPtr){
+            if (properties.size!=0){
+                properties.parent->properties.strongLinks--;
+                if (properties.parent->properties.strongLinks==0) delete this;
+                return;
+            } else {
+                return;
+            }
+        }if (properties.strongLinks > 1){
+            properties.strongLinks--;
+            return;
+        } else if (properties.strongLinks == 1) {
+            delete this;
+        }
     }
     void chmod(){
         properties.mod ^= isExecutable;
@@ -217,6 +237,12 @@ public:
     Properties getProperties() override {
         return properties;
 	}
+    void AddLink(){
+        properties.strongLinks++;
+    }
+    void DeductLink(){
+        properties.strongLinks--;
+    }
 
 };
 
@@ -247,7 +273,7 @@ public:
                     if ( j->GetName() == i->getProperties().GetName()) allFiles.erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());   // erase(remove(allFiles.begin(), allFiles.end(), j), allFiles.end());
                 }
                 if (i->getProperties().isDir) delete dynamic_cast<Directory *>(i);
-                else delete dynamic_cast<File *>(i);
+                else dynamic_cast<File *>(i)->del();
                 List.erase(remove(List.begin(), List.end(), i), List.end());
                 return;
             }
@@ -256,13 +282,26 @@ public:
 	}
 	void createFile(const string& fileName, int size) {
         auto X = new File({false, ToChar(fileName, ""), size});
-		List.push_back(X);
+        X->properties.strongLinks++;
+        List.push_back(X);
 	};
 
     void createFileWeakPtr(const string& ptrName, const string& parentName) {
         for (auto i : List){
             if (i->getProperties().GetName() == parentName) {
                 auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i)});
+                List.push_back(X);
+            }
+        }
+    };
+    void createFileStrongPtr(const string& ptrName, const string& parentName) {
+        for (auto i : List){
+            if (i->getProperties().name == parentName) {
+                auto X = new File({false, ToChar(ptrName, ""), 0, true, dynamic_cast<File *>(i)});
+                dynamic_cast<File *>(i)->AddLink();
+                X->properties.size = i->getProperties().size;
+                X->properties.l = i->getProperties().l;
+                allFiles.push_back(&X->properties);
                 List.push_back(X);
             }
         }
@@ -328,7 +367,18 @@ void openFile(const string& target){
             return;
         }
         else if (i->getProperties().GetName() == target && i->getProperties().isPtr) {
-            i->getProperties().parent->open();
+            if (i->getProperties().size!=0){
+                dynamic_cast<File *>(i)->open();
+                return;
+            } else{
+                for (auto j : allFiles){
+                    if (j == &i->getProperties().parent->properties) {
+                        i->getProperties().parent->open();
+                        return;
+                    }
+                }
+            }
+            cout << "No parent" << endl;
             return;
         }
     }
@@ -375,8 +425,14 @@ void chmod(const string &target) {
 vector<string> find(string& target){
     vector<string> arr;
     char first = target[0];
+    regex r(R"(\w*.txt)");
     if (first == '*'){
-        target = target.substr(1);
+        for (auto i : currentDir->List){
+            if (regex_match(i->getProperties().GetName(), r)){
+                arr.push_back(i->getProperties().GetName());
+            }
+        }
+        return arr;
     }
     for (auto i : currentDir->List){
         if (i->getProperties().GetName().find(target) != string::npos){
@@ -429,6 +485,10 @@ int main()
             cin >> name;
             cin >> parrentName;
             currentDir->createFileWeakPtr(name, parrentName);
+        }else if (command == "touchstrong") {
+            cin >> name;
+            cin >> parrentName;
+            currentDir->createFileStrongPtr(name, parrentName);
         }else if (command == "rm"){
             cin >> name;
             currentDir->Delete(name);
